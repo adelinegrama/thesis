@@ -3,7 +3,7 @@
 
 % Description
 \newcommand{\authorName}{GRAMA Alina}
-\newcommand{\thesisTitle}{Разработка web API на C\#}
+\newcommand{\thesisTitle}{Разработка web API на C\#}  % на румынском?
 \newcommand{\thesisTitleEng}{Developing a web API in C\#}
 \newcommand{\uniGroupName}{DJ2203}
 \newcommand{\thesisType}{licență}
@@ -27,7 +27,7 @@
 
 \clearpage
 \unnumberedChapter{Список аббревиатур}
-\begin{acronym}[JPEG]
+\begin{acronym}[JPEG]  % ???
     \acro{API}{Application Programming Interface}
     \acro{REST}{Representational State Transfer}
     \acro{DI}{Dependency Injection}
@@ -51,6 +51,8 @@
 \markpage{usefulStuffBegin}
 
 \textbf{Актуальность и важность темы.}
+
+% \ac{} vs \acs{}
 
 Механизм веб-\ac{API} широко используется для различных приложений, таких как веб-приложения, мобильные приложения, 
 облачные сервисы и интеграция с внешними системами. Данный API позволяет клиенту и серверу взаимодействовать друг с другом, 
@@ -80,410 +82,51 @@
 
 \textbf{Прикладная значимость.}
 
-Aplicația obținută poate fi folosită pentru a face cunoștința cu formatul de fișier \acs{PNG}.
-
-Cu toate acestea, scopul principal al lucrării constă
-în partea educațională și practică a acesteia pentru student,
-iar aplicația este doar produsul primit în urma implementării codurilor necesare.
-Partea educațională și practică include următoarele puncte:
-\begin{itemize}
-    \item Experiența adunată în procesul rezolvării problemelor întâlnite;
-    \item Înțelegerea formatului de fișier \acs{PNG};
-    \item
-        Înțelegerea formaturilor de comprimare asociate,
-        și, în particular, experiența de implementare a acestor formaturi;
-    \item Folosirea arborilor sintactici pentru a realiza partea grafică a aplicației.
-\end{itemize}
-
-Toate acestea vor avea valoare în munca profesională a studentului în viitor.
-
-
 \textbf{Краткое описание глав.}
-
-Primul capitol, \nameref{intro_chapter_title}, prezintă informații generale despre
-formaturile \acs{PNG} și formatul de comprimare Zlib folosit în \acs{PNG}.
-Este menționat limbajul de programare Zig și de ce acesta a fost ales
-ca limbajul principal de dezvoltare a proiectului.
-
-Al doilea capitol, \nameref{architecture_chapter_title}, schițează implementarea,
-subliniind ideile la începutul dezvoltării și explică abordările selectate.
-Este explicat procesul de gândire în ceea ce ține divizarea aplicației la module,
-și luarea deciziilor în ceea ce ține arhitectura la nivel înalt a proiectului.
-Tot aici este introdusă imaginea inițială a întregii aplicații.
-
-Al treilea capitol, \nameref{implementation_chapter_title},
-urmează implementarea iterativă a modulelor introduse,
-adică se identifică problemele abordării inițiale,
-se propune o abordare îmbunătățită, și se explică detaliat varianta finală a implementării
-acolo unde aceasta merită atenție sau este interesantă.
-Acest capitol include și programarea interfeței grafice.
 
 \chapter{Теоретические основы веб-\ac{API} и ASP.NET Core}\label{intro_chapter_title}
 
 \section{Мотивация создания приложения}
 
-\subsection{}
+\subsection{Введение}
+
+\subsection{Цель приложения}
 
 \subsection{}
 
-\subsection{}
 
-Mai jos sunt enumerate capacitățile principale ale formatului \ac{PNG} (reinterpretat din specificație)\cite[1.]{png_spec}.
+\section{Понятие и назначение веб-\ac{API}}
 
-Capacitățile păstrate din GIF:
+\subsection{Введение}
 
-\begin{itemize}
-    \item
-        Imagini cu paletă de culori de până la 256 de culori.
-        
-    \item
-        Posibilitatea de a fi transmis în flux:
-        fișierele pot fi citite și scrise în serie, permițând astfel utilizarea formatului
-        PNG ca protocol de comunicare pentru generarea și afișarea imaginilor dinamic.
-
-    \item
-        Afișare progresivă: un fișier de imagine pregătit corespunzător poate fi
-        afișat pe măsură ce este primit pe canalul de comunicare,
-        furnizând foarte repede o imagine cu rezoluție redusă,
-        urmată de îmbunătățirea graduală a detaliilor.
-
-    \item
-        Transparență: porțiuni ale imaginii pot fi marcate ca transparente,
-        creând efectul unei imagini non-rectangulare.
-
-    \item 
-        Informații auxiliare: comentarii textuale și alte date pot fi
-        stocate în interiorul fișierului de imagine.
-
-    \item
-        Complet independenți de hardware și platformă.
-
-    \item
-        Compresie eficientă, 100\% fără pierderi.
-\end{itemize}
-
-Caracteristicile noi ale PNG, indisponibile în GIF, includ:
-
-\begin{itemize}
-    \item Imagini de culoarea reală (truecolor) de până la 48 de biți per pixel.
-
-    \item Imagini gri de până la 16 biți per pixel.
-
-    \item Canal de transparență independent.
-
-    \item 
-        Informații gamma ale imaginii, care permit afișarea automată a imaginilor
-        cu luminozitate sau contrast corecte indiferent de mașinile utilizate
-        pentru a genera sau afișa imaginea.
-
-    \item Asigurarea integrității imaginii printr-un algoritm simplu (\ac{CRC}).
-
-    \item Prezentare inițială mai rapidă în modul de afișare progresivă.
-\end{itemize}
-
-PNG este conceput să fie:
-
-\begin{itemize}
-    \item
-        Simplu și portabil: dezvoltatorii ar trebui să poată implementa PNG ușor.
-
-    \item
-        Fără sarcini juridice: s-a depus un efort semnificativ pentru a asigura
-        că PNG va fi mereu un format liber și gratuit.
-
-    \item
-        Bine comprimat: atât imaginile cu paletă de culori,
-        cât și imaginile cu culoarea reală (truecolor images)
-        sunt comprimate la fel de eficient ca și în alte
-        algoritmi existenți de comprimare fără pierderi,
-        dar des și mai eficient.
-
-    \item
-        Interschimbabilitatea: orice decodor PNG care conformă standardului
-        va putea citi toate fișierele PNG conforme.
-
-    \item
-        Flexibil: formatul permite extensii viitoare,
-        fără a compromite interschimbabilitatea PNG de bază.
-
-    \item
-        Robust: designul susține verificarea completă a integrității fișierului,
-        precum și detectarea simplă și rapidă a erorilor comune de transmisie.
-\end{itemize}
-
-Datorită capacităților enumerate mai sus, formatul \ac{PNG} este folosit
-pe larg pentru imagini în Internet, însă este o alegere bună și în artă digitală,
-și în dezvoltarea jocurilor.
-
-
-\subsection{Structura formatului}
-
-Structura fișierelor \ac{PNG} este bazată pe o serie de blocuri,
-cunoscute sub numele de \textbf{chunk-uri}\cite[3.]{png_spec}.
-Fiecare chunk are o structură specifică și o funcție definită,
-contribuind la crearea și interpretarea corectă a imaginii.
-
-Chunk-urile pot fi ori critice, ori auxiliare.
-Chunk-urile critice sunt neapărat necesare pentru a putea interpreta imaginea.
-Dacă decodorul nu poate interpreta un chunk critic, nici nu va putea prezenta imaginea,
-de aceea acest lucru nu se permite conform specificației.
-Chunk-urile auxiliare se folosesc pentru a îmbunătăți imaginea 
-(ca de exemplu informații gama pentru a selecta o culoare mai favorabilă),
-sau pentru a adăuga informații suplimentare la imagine
-(ca chunk-ul text pentru titlul imaginii).
-Prin urmare, chiar dacă toate chunk-urile auxiliare ar fi ignorate de către un decodor,
-acesta ar putea arăta imaginea.
-La chunk-uri critice prima literă din tip este majusculă,
-iar la cele auxiliare ea este minusculă.
-
-Capacitatea de flexibilitate a formatului este asigurată prin această structură fundamentală de chunk-uri.
-Fiecare chunk are subformatul său independent,
-și chunk-urile noi pot fi adăugate transparent și fără a afecta
-implementările existente ale decodorilor,
-dacă chunk-ul se declară ca fiind unul auxiliar.
-
-Urmează o listă de unele chunk-uri de bază, definite în specificația formatului:
-\begin{itemize}
-  \item
-      \textbf{Antetul imaginii (Image Header sau \texttt{IHDR})}:
-      Acesta este primul chunk din orice fișier \ac{PNG}.
-      Conține informații esențiale despre imagine, cum ar fi lățimea,
-      înălțimea, tipul de culoare, compresia, filtrarea și întrelățarea (interlacing).
-      Este un exemplu de chunk critic, ce poate fi dedus uitându-se
-      la prima literă din nume și observând că este majusculă.
-
-  \item
-      \textbf{Paleta de culori (\texttt{PLTE})}:
-      Conține secvența de culori utilizate în imagine.
-
-  \item
-      \textbf{Datele imaginii (Image Data sau \texttt{IDAT})}:
-      Aceste chunk-uri conțin datele imaginii,
-      comprimate conform algoritmului de comprimare fără pierderi al formatului \ac{PNG}.
-      Specificația oficială suportă doar algoritmul Zlib de comprimare.
-
-  \item
-      \textbf{Transparența (\texttt{tRNS})}:
-      Oferă informații despre transparența anumitor culori din imagine,
-      permițând, de exemplu, un fundal transparent sau ca imaginea să apară nerectangulară.
-
-  \item
-      \textbf{Chunk-urile cu informații textuale (\texttt{tEXt}, \texttt{zTXt}, \texttt{iTXt})}:
-      Aceste chunk-uri pot conține text pentru informații diverse despre imagine,
-        cum ar fi titlul, autorul, descrierea, etc.
-
-  \item
-      \textbf{Chunk de sfârșit (\texttt{IEND})}:
-      Acest chunk marchează sfârșitul fișierului \ac{PNG} și nu conține date.
-\end{itemize}
-
-\subsection{Structura unui chunk}
-
-Orice chunk este alcătuit din 4 câmpuri:
-\begin{itemize}
-    \item \textbf{Lungimea}. Este un număr întreg pe 4 octeți care indică numărul de octeți în câmpul de date al chunk-ului;
-    \item \textbf{Tipul chunk-ului}. Acestea sunt 4 octeți, de obicei 4 litere, care identifică tipul chunk-ului.
-    \item \textbf{Datele chunk-ului}. Conțin datele specifice tipului de chunk dat, de lungimea dată.
-    \item \textbf{\ac{CRC}}.
-        Este calculat pe baza tuturor octeților din câmpurile de tip al chunk-ului și de datele chunk-ului. 
-        Se folosește un algoritm standart, pseudocodul pentru care este în specificație.
-        A se vedea implementarea în anexa \ref{appendix:crc}.
-\end{itemize}
-
-Structura datelor păstrate în câmpul cu datele chunk-ului sunt diferite pentru fiecare tip de chunk.
-Ele sunt descrise pe larg în specificație, dar nu vor fi explicit menționate în această lucrare.
-
-\subsection{Întrelățarea}
-
-\ac{PNG} utilizează un mecanism numit întrelățare,
-care permite o încărcare progresivă a imaginii.
-În formatul \ac{PNG}, înterlățarea este realizată prin algoritmul Adam7,
-care împarte imaginea în mai multe trepte de încărcare,
-îmbunătățind experiența vizuală în timpul încărcării continue a imaginii.
-
-Ideea este că imaginea se subdivizează în mai multe pătrate de dimensiuni $8 \times 8$,
-iar întreaga imagine este transmisă în 7 pași, conform \refFigure{pixel_order_table}, unde
-fiecare celulă indică pasul la care este transmis acel pixel.
-
-\begin{figure}[!ht]
-\centering
-\begin{tabular}{c c c c c c c c}
-    1 & 6 & 4 & 6 & 2 & 6 & 4 & 6 \\
-    7 & 7 & 7 & 7 & 7 & 7 & 7 & 7 \\
-    5 & 6 & 5 & 6 & 5 & 6 & 5 & 6 \\
-    7 & 7 & 7 & 7 & 7 & 7 & 7 & 7 \\
-    3 & 6 & 4 & 6 & 3 & 6 & 4 & 6 \\
-    7 & 7 & 7 & 7 & 7 & 7 & 7 & 7 \\
-    5 & 6 & 5 & 6 & 5 & 6 & 5 & 6 \\
-    7 & 7 & 7 & 7 & 7 & 7 & 7 & 7 \\
-\end{tabular}
-\caption{Tabelul ordonării pixelilor}
-\label{fig:pixel_order_table}
-\end{figure}
-
-\subsection{Utilizări și Limitări}
-
-Deși formatul \ac{PNG} este versatil și oferă o calitate ridicată a imaginii, are și câteva limitări.
-Nu suportă animații native (spre deosebire de formatul \ac{GIF})
-și nu este ideal pentru fotografii datorită dimensiunii mai mari a fișierului comparativ
-cu formaturile comprimate cu pierderi, spre exemplu, \ac{JPEG}.
-Cu toate acestea, este foarte popular pentru grafica web,
-datorită transparenței și calității imaginii.
-
-\subsection{Datele imaginii}
-
-Datele imaginii, adică valorile de culoare pentru fiecare pixel, se regăsesc în chunk-uri \texttt{IDAT}\cite[4.1.3.]{png_spec}.
-Fiecare chunk \texttt{IDAT} atașat unul după altul conține fluxul de aceste date, mereu comprimat cu formatul Zlib.
-
-Pentru a restabili culorile pixelilor, pe fiecare linie se aplică câte un filtru.
-Fiecare filtru are o formulă simplă care derivă valoarea unui pixel
-din valorile octetutului decomprimat și valorile pixelilor din sus și din stânga-sus.
-Identificatorul filtrului este păstrat ca primul octet din secvența decomprimată. 
-
-Filtrele sunt necesare pentru a permite o compresie mai optimă.
-Ele exploatează pattern-uri din imagine, aducând datele într-o formă mai favorabilă pentru Zlib.
-
-Acestea n-au fost implementate în program, deoarece sunt necesare
-doar pentru a restabili valorile concrete ale pixelilor,
-ceea ce se folosește pentru prezentarea imaginii dar nu este util pentru vizualizarea formatului de fișier.
-
-\section{Formatul de comprimare Zlib}
-
-\subsection{Informații generale}
-
-Zlib este formatul de comprimare folosit în scopul unor chunk-uri din formatul \ac{PNG}.
-De exemplu, chunk-ul \texttt{zTXt} definește câmpul \texttt{Compressed text},
-care include direct șirul compresat în formatul Zlib\cite[4.1.3.]{zlib_spec}.
-
-La fel ca și formatul \ac{PNG}, Zlib include un câmp folosit pentru verificarea integrității datelor.
-Algoritmul folosit pentru calcularea acestui câmp este numit Adler32.
-Cheia este că acesta este calculat pe baza datelor \textit{decomprimate},
-deci poate fi folosit pentru a verifica și integritatea datelor, și corectitudinea programului implementat.
-
-Zlib are și alte capacități ca suportul pentru dicționare, permite setarea parametrilor de comprimare, etc.
-Însă, acestea nu sunt relevante pentru interpretarea unui fișier \ac{PNG}.
-Dicționarele absolut nu sunt folosite, și chiar sunt interzise după specificație \cite[5.]{png_spec}.
-Parametrii de comprimare sunt folositori doar pentru procesul de comprimare,
-adică, în context-ul formatului \ac{PNG}, generarea unui fișier din datele pixelilor.
-Deoarece scopul aplicației este de a realiza \textit{citirea} unui fișier \ac{PNG},
-dar nu generarea unui așa fișier, acestea nu vor fi menționate în continuare.
-Câmpurile cu aceste date, însă, sunt citite și validate în mod normal, conform specificației Zlib.
-
-\subsection{Zlib în \acs{PNG}}
-
-Formatul \ac{PNG} folosește comprimarea datelor prin algoritmul Zlib.
-Comprimarea se folosește pentru chunk-urile \texttt{zTXt} (text comprimat),
-\texttt{iCCP} (profil \ac{ICC}), precum și altele.
-Toate datele pixelilor, adică datele chunk-urilor \texttt{IDAT}, sunt comprimate folosind acest algoritm.
-
-Structura acestui format se explică în mai multe detalii în capitolul \ref{implementation_chapter_title},
-deoarece este strâns legată de implementare.
-
-\section{Limbajul de programare Zig}
-
-\subsection{Descriere generală}
-
-Limbajul de programare Zig\cite{zig} este un limbaj de programare de nivel scăzut, aproape de C.
-Zig se conține într-un spațiu special, în acel sens că scopul lui este de
-a îmbunătăți securitatea programelor, eliminând neajunsurile limbajului C
-și adăugând diverse tipuri de verificări stricte la compilare,
-dar fără a deveni un limbaj de nivel înalt.
-
-Zig provizionează programatorul la nivel de limbaj cu așa funcționalități ca 
-uniuni etichetate, uniuni neetichetate verificate în modul de compilare pentru depanare,
-slice-uri, tablouri de mărime fixă ca valori (la fel ca \texttt{std::array} din C++),
-nulabilitatea foarte strictă, inclusiv la pointeri, modalități convenabile de procesare a erorilor,
-tipuri întregi de orice mărime fixă și foarte multe alte.
-Însă, în același timp, nu se provizionează o abstracție pentru interfețe sau clase virtuale,
-moștenirea tipurilor, capacitățile programării funcționale ca expresii lambda,
-capturarea stivei implicită.
-
-Zig încă este nestabil și tânăr, fiind în procesul de continuă dezvoltare și optimizare.
-Însă, aceasta nu-l impiedică să fie un limbaj de programare bun.
-
-\subsection{Siguranța memoriei}
-
-Deoarece nu există constructori și destructori la structuri,
-nici nu există conceptul de \ac{RAII}.
-\ac{RAII} sau, în alte cuvinte, conceptul de proprietar, este modul principal
-prin care limbajele ca C++ și Rust se străduiesc să rezolve problema siguranței memoriei.
-
-Zig, apriori, nu garantează suguranța memoriei.
-El dă libertatea programatorului să, aleagă, cum și când să șteargă memoria alocată,
-pentru a rămâne un limbaj de programare de sistem.
-Cu toate acestea, Zig introduce mai multe utilități și capacități care pot ajuta cu aceasta.
-
-O idee cheie în Zig este ca toate alocările memoriei să fie vizibile la utilizator.
-Pentru a aloca memoria, utilizatorul trebuie să transmită funcției care solicită alocarea memoriei
-un obiect de alocator în mod explicit (ca parametru).
-Acest obiect poate fi înlocuit cu o implementare personalizată,
-de exemplu pentru a monitoriza alocările, în mod trivial.
-Pur și simplu se transmite un obiect de alocator diferit.
-
-
-\subsection{Siguranță derivată din explicitate}
-
-Zig este mult mai strict, și de aceea mai sigur în ceea ce ține, de exemplu, de numere întregi.
-Dacă, spre exemplu, codul C este compilat cu comanda de compilare implicită,
-adică fără flaguri \texttt{-Wconversion -Werror}, situațiile unde se pierd informații,
-ca conversiunea de la tipuri întregi cu semn la tipuri fără semn, sau conversiuni ale întregilor
-de la 64 de biți la 32 de biți, sunt acceptate de către compilator fără nici o eroare sau avertizare,
-iar cazurile unde așa conversiuni de fapt se întâmplă în timpul rulării
-sunt specificate ca ``undefined behavior'' în C!
-Deci ele nici nu sunt detectate în timpul rulării și produc rezultate necunoscute.
-
-În Zig, compilatorul înserează verificări în timpul rulării pentru așa cazuri.
-Dacă oarecare pierdere de informație neașteptată are loc,
-programul va da eroarea (ar ``panica'') cu stack trace-ul execuției.
-În plus, fiecare loc unde pierderea de informație este posibilă trebuie numaidecât
-să fie notată explicit în cod, altfel compilatorul nu-l va accepta.
-
-Un crash este mai bun decât scrierea sau citirea în sau din memorie invalidă,
-ori și mai rău, niște rezultate neașteptate în urma corupției memoriei.
-Zig se străduiește să detecteze erorile la etapa înainte
-de scriere în memorie invalidă, detectând eroarea care urmează să provoace aceasta.
-
-\subsection{Perfecționarea continuă}
-
-Este clar de ce C nu poate implementa așa verificări de control --
-C are o specificație fixă, cărei acesta trebuie să-i conformeze.
-C are probleme care nu pot fi rezolvate din cauza că nu se mai poate schimba semnificativ,
-iar adăugarea de așa verificări în tipul rulării implică, numaidecât,
-o schimbare semnificativă a limbajului.
-
-Abordarea limbajului Zig este că acesta își permite schimbarea,
-în orice mod, deoarece nu are versiunea 1.0, deci oficial se declară pe sine însuși ca instabil.
-Deci dacă o persoană decide să programeze în Zig,
-trebuie să fie gata să accepte schimbări dramatice ale limbajului.
-Aceasta se face pentru a putea repara problemele fundamentale
-ale limbajului dacă așa probleme sunt observate în viitor.
-
-Zig are mai multe capacități minunate, însă nu va ajunge spațiu pentru a le enumera.
-
-\subsection{Concluzii despre Zig}
-
-Luând în considerare toate aceastea, s-a decis că limbajul Zig ar fi bun pentru astfel de aplicație.
-Partea majoră a aplicației funcționează la nivel foarte scăzut,
-citind octeți sau chiar biți din fluxul de date.
-Capacitățile de erori ca valori validate în timpul compilării,
-enumerații pentru stări și pentru tipurile chunk-urilor,
-chiar unele capacități de metaprogramare puternice dar intuitive ale limbajului,
-precum și posibilitatea de interoperabilitate între Zig și C pentru a putea lucra cu librăria grafică,
-au ajutat considerabil în dezvoltare.
+\subsection{Определение веб-\ac{API} и их виды}
+
+\subsection{Основные архитектурные стили веб-\ac{API}: \ac{REST}}
+
+
+\section{ASP.NET Core как платформа для разработки веб-\ac{API}}
+
+\subsection{История и эволюция}
+
+\subsection{Основные преимущества}
+
+\section{Object-Relational Mapping и Entity Framework Core}
+
+\subsection{Определение \ac{ORM} и \ac{EF} Core}
+
+\subsection{Класс DbContext}
+
+\subsection{Основные преимущества \ac{EF} Core}
+
+\section{Dependency Injection в ASP.NET Core}
+
+\subsection{Понятие и принцип работы \ac{DI}}
+
+\subsection{Виды классов и внедрения зависимостей}
+
+\subsection{Жизненный цикл зависимостей и их различия}
 
 \chapterConclusionSection{intro_chapter_title}
-
-În acest capitol au fost descrise formatul \ac{PNG} și
-formatul de comprimare Zlib care este folosit în formatul \ac{PNG}.
-A fost descrisă structura formatului \ac{PNG}: ce sunt chunk-uri,
-de ce acestea se folosesc, ce tipuri există, câmpurile principale, etc.
-
-S-au mai discutat princiile de înterlănțare și comprimare.
-Cu părere de rău, acestea nu se vor include în interfață, însă sunt niște concepte importante ale formatului.
-
-Echiparea cu aceste cunoștințe dă posibilitatea de a aborda proiectarea
-și programarea aplicației orientate spre lucrul cu aceste formaturi.
-
 
 \chapter{Proiectarea aplicației de vizualizare a formatului \acs{PNG}}\label{architecture_chapter_title}
 
