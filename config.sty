@@ -38,7 +38,7 @@
 \setmainfont{Times New Roman}
 
 % Romanian language support
-\usepackage[romanian]{babel}
+\usepackage[english, russian]{babel}
 
 % Appendices
 \usepackage[toc,page]{appendix}
@@ -162,7 +162,7 @@
   % this evaluates a math expression, which is `end - begin`
   \the\numexpr\getpagemark{usefulStuffEnd}-\getpagemark{usefulStuffBegin}\relax}
 
-\newcommand\chapterConclusionSection[1]{\section{Concluzii pentru capitol \arabic{chapter}}}
+\newcommand\chapterConclusionSection[1]{\section{Выводы для главы \arabic{chapter}}}
 \newcommand{\bibliographyEntryCount}{\total{citnum}}
 
 % Some math stuff? I don't even know.
@@ -170,7 +170,8 @@
 
 % Make figures use Fig. instead of Figura.
 % Has to be set per-language, otherwise it gets overridden.
-\addto\captionsromanian{\renewcommand{\figurename}{Fig.}}
+% \addto\captionsromanian{\renewcommand{\figurename}{Fig.}}
+\addto\captionsrussian{\renewcommand{\figurename}{Фиг.}}
 % Their numbering has to use the chapter number.
 \renewcommand{\thefigure}{\arabic{chapter}.\arabic{figure}}
 
