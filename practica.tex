@@ -10,7 +10,7 @@
 \newcommand{\identificatorulCursului}{0211.7 Designul jocurilor}
 
 % Hardcoded for now
-\newcommand{\anexeCount}{20}
+% \newcommand{\anexeCount}{20}
 \newcommand{\conferencesList}{I don't know what to write here}
 
 \begin{document}
@@ -50,7 +50,7 @@
   \begin{flushleft}
     \begin{tabular}{ p{4cm} p{4cm} p{8cm}}
       Conducătorul științific: & \underscores{4cm} & CURMANSCHII Anton,\\
-                               &                   & conferențiar universitar\\ % изменить
+                               &                   & asistent universitar \\
       Autor:                   & \underscores{4cm} & \authorName,\\
                                &                   & studenta din grupa DJ2203\\
     \end{tabular}
@@ -150,7 +150,7 @@
 К тому же для написания моего приложения был выбран фреймворк ASP.NET Core, так как данный фреймворк является стандартом для написания веб-\ac{API} проектов. 
 
 Также, моя дипломная работа предполагает использование баз данных, для этого был выбран MS SQL Server, для которого, тоже, требуется расширение в VS Code. 
-Кроме этого, в проект был добавлен Entity Framework Core.
+Кроме этого, в проект был добавлен \ac{EF} Core.
 
 \section{Описание веб-\ac{API} на высоком уровне}
 
@@ -195,9 +195,9 @@
 В коде присутствуют элементы, указывающие на то, что данный класс является \ac{API}-контроллером:
 \begin{enumerate}
   \item
-      Атрибут [ApiController], который указывает, что это \ac{API}-контроллер.
+      Атрибут \texttt{[ApiController]}, который указывает, что это \ac{API}-контроллер.
   \item
-      Атрибут [Route("api/[controller]")], который определяет маршрут.
+      Атрибут \texttt{[Route("api/[controller]")]}, который определяет маршрут.
   \item
       \ac{API}-контроллер должен быть унаследован от класса ControllerBase.
   \item
@@ -290,23 +290,5 @@
 
 \newpage
 \markpage{usefulStuffEnd}
-
-% Bibliography
-\bibliographystyle{plain}
-\bibliography{bibliography}
-\addcontentsline{toc}{chapter}{\bibname}
-
-% Appendices
-\appendix
-
-% Number with arabic numbers instead of Roman
-\renewcommand{\thechapter}{\arabic{chapter}}
-% Prepend Anexa to section names, center them
-\titleformat{\section}[block]{\normalfont\normalsize\bfseries\filcenter}{Anexa \thesection~}{0pt}{}
-
-% Since we've got just a single chapter in the appedices,
-% but which is also the name of the Appendix chapter, it should be omitted.
-% Makes little sense, but ok I guess.
-\setcounter{chapter}{1}
 
 \end{document}
