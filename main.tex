@@ -299,264 +299,39 @@ Dependency Injection включает в себя 3 типа классов:
 
 Владение этими знаниями позволяет создать основу для проектирования и программирования веб-\acs{API} приложения.
 
-\chapter{Proiectarea aplicației de vizualizare a formatului \acs{PNG}}\label{architecture_chapter_title}
+\chapter{Проектирование архитектуры системы}\label{architecture_chapter_title}
 
-\section{Planificarea implementării}
+\section{Архитектурное проектирование системы}
 
-\subsection{Dezvoltarea în \acs{WSL}}
+\subsection{Монолитная и микросервисная архитектуры}
 
-Dezvoltarea pe Linux eclipsează dezvoltarea pe Windows -- aceasta este un fapt incontestabil.
-\begin{itemize}
-    \item 
-        Windows nu are un manager de pachete integrat în sistem.
-        Cu toate că pe versiuni noi există aplicația WinGet, 
-        aceasta nu este atât de stabilă și dezvoltată ca apt-get de pe Ubuntu.
-        Există și Chocolatey, însă acesta nu permite instalarea pachetelor de ultimă versiune,
-        dacă această versiune nu este în lista lor a ``pachetelor de încredere'',
-        și nu include toate capacitățile în versiunea gratuită.
-        (Aceste afirmații sunt fără referințe bibliografice deoarece 
-        au fost aflate în trecut și sursele care le confirmă au fost pierdute.)
+\subsection{Разделение системы на уровни}
 
-    \item
-        Este practic imposibil să facă un build la orice aplicație în mod fiabil.
-        Windows este foarte sensibil la configurări globale ale sistemului,
-        mereu lipsește careva pachete instalate, sau tocmai nu suportă unele pachete, etc.
-        Compilarea aplicațiilor pe Windows mereu implică ``probleme pe cap''.
-        Pe de altă parte, pe Linux aceasta este trivial.
-        După instalarea pachetelor necesare, build-urile lucrează ideal în aproape 100\% din cazuri.
+\subsection{Взаимодействие между слоями}
 
-    \item
-        Unele aplicații nu există pe Windows.
-        De exemplu, \texttt{Valgrind} și \texttt{MSan}.
+\section{Подходы к проектированию базы данных}
 
-    \item
-        Unele aplicații așteaptă sistemul de tip Unix.
-        De exemplu, abordarea răspândită pentru dezvoltarea plugin-urilor
-        pentru Neovim este să se presupună că sistemul este Unix,
-        deoarece dezvoltatorul oricum trebuie să folosescă Unix pentru a fi productiv.
-\end{itemize}
+\subsection{Code-First и Database-First}
 
-Din fericire, Windows a introdus capacitatea minunată \ac{WSL}\cite{wsl}.
-Fără a intra în mecanisme funcționării acesteia, deoarece aceasta nu este în scopul lucrării,
-pe scurt \ac{WSL} poate fi explicat ca un sistem de Linux integrat în Windows, care poate citi fișierele din Windows.
-
-Destul de recent a fost introdusă și capacitatea de a rula aplicații grafice prin \ac{WSL}.
-Ferestrele create în așa mod pot fi manipulate ca orice altă fereastră pe Windows.
-
-Mulțumită \ac{WSL}, toata dezvoltarea a fost realizată practic pe Linux, 
-ceea ce a simplificat lucrul cu librării externe și instalarea instrumentelor adăugătoare, nemenționate explicit în text.
-
-\subsection{Ideea aplicației}
-
-Având la bază o abordare explorativă, s-a decis programarea aplicației
-pornindu-se de la o imagine vagă a rezultatului dorit,
-însă cu o direcție clară în ceea ce privește obiectivul general.
-
-Având în vedere faptul că scopul principal al aplicației
-este de a facilita explorarea structurii fișierelor \ac{PNG},
-s-ar dori ca funcționalitatea să fie direct
-influențată și determinată de această structură.
-Proiectarea interfeței grafice are ca scop principal reflectarea
-caracteristicilor specifice ale fișierelor \ac{PNG}.
-
-Fișierele \ac{PNG} sunt compuse din secvențe denumite chunk-uri,
-fiecare având o funcție specifică.
-De exemplu, chunk-ul \texttt{IHDR} conține informații vitale despre imagine,
-precum lățimea, înălțimea, numărul de biți per pixel ș.a.
-Se intenționează ca interfața aplicației să pună
-în evidență aceste chunk-uri, oferind detalii despre ele utilizatorilor
-și, poate, permițând modificarea valorilor într-un mod
-care nu afectează integritatea fișierului.
-Informațiile ar fi prezentate per chunk, atunci când utilizatorul îl alege,
-iar fiecare chunk trebuie să fie evidențiat, pentru a-l putea alege și vizualiza.
-
-Pentru a sublinia aspectul de explorare a \textit{formatului} \ac{PNG},
-și nu doar manipularea imaginilor în acest format,
-se va include în aplicație un editor hexazecimal.
-Acesta va prezenta valorile fiecărui octet și
-va oferi reprezentări vizuale pentru a facilita distingerea diferitelor chunk-uri.
-
-\subsection{Imaginea inițială a implementării}
-
-În dezvoltarea software, este, adesea, practic să se abordeze problemele pe măsură ce apar.
-Însă procesul de gândire și modul în care se ajunge la soluții
-pot adăuga valoare dacă sunt împărtășite.
-Deși nu există garanția că ideile înregistrate vor duce
-la o soluție optimă sau chiar una funcțională,
-și anumite probleme de implementare sunt ignorate la această etapă inițială,
-această abordare reflectă natura evolutivă a dezvoltării software.
-
-Excesul de planificare și gândire înainte de începerea scrierii codului
-poate adesea conduce la un design incorect sau inferior.
-Acest lucru se datorează faptului că în timpul programării pot apărea probleme neanticipate,
-din cauza lipsei unei viziuni complete asupra întregului sistem.
-Din acest motiv, planificarea detaliată a întregului sistem înainte de începerea dezvoltării
-nu este întotdeauna cea mai înțeleaptă abordare.
-Cu toate acestea, planificarea la nivel înalt a structurii aplicației,
-ținând cont de cerințe și în baza experienței,
-este utilă pentru a descompune problema în subprobleme gestionabile
-și pentru a începe implementarea unei soluții.
-
-Pentru a reflecta această viziune, s-a stabilit ca aplicația
-să fie împărțită în mai multe module esențiale:
-\begin{itemize}
-  \item 
-  \textbf{Modulul de acces la fișiere după poziții absolute},
-  care va gestiona cache-ul segmentelor vizualizate în prezent,
-  ștergerea segmentelor nedorite din memorie și citirea datelor din fișier la necesitate.
-  Acest modul este o abstracție cheie pentru a simplifica interacțiunea cu fișierele \ac{PNG}.
-
-  \item
-  \textbf{Arborele sintactic al fișierului \ac{PNG}},
-  care ar trebui să păstreze în memorie doar informațiile despre
-  chunk-urile vizualizate la un moment dat.
-  Acesta ar permite accesul la informații structurate despre fișier
-  și ar fi interfațat cu modulul de interacțiune cu utilizatorul
-  pentru a indica ce segmente din fișier sunt vizualizate.
-
-  \item
-  \textbf{Parser-ul}, responsabil pentru transformarea datelor
-  din fișier într-un arbore sintactic la cerere.
-  Acest modul poate consta dintr-un set de funcții specifice pentru această transformare.
-
-  \item
-  \textbf{Modulul de interfață cu utilizatorul},
-  care va folosi arborele sintactic al fișierului pentru
-  a prezenta utilizatorului informații într-o formă atractivă și interactivă.
-  Modulul va avea control asupra segmentelor din fișier care sunt vizualizate,
-  permițând utilizatorului să actualizeze aceste segmente
-  în funcție de chunk-urile afișate în interfață.
-\end{itemize}
-
-Așa cum s-a discutat, acestă imagine inițială este un punct de plecare,
-iar implicațiile utilizării acestuia au fost analizate pe parcursul dezvoltării.
-
-\subsection{Avantajele unui arbore sintactic}
-
-Folosirea unui arbore sintactic este o abordare bună pentru problemele 
-unde datele sunt structurate în mod ierarhic și se cere a fi analizate sau cumva accesate pe urmă.
-Proprietatea cheie a acestei abordări este faptul că arborele poate fi \textit{abstract},
-ceea ce înseamnă că acesta este o reprezentare la un nivel mai înalt a informațiilor despre datele
-din care a fost construit.
-Din această proprietate rezultă avantajul principal al acestei abordări --
-construirea arborelui analizând datele neprocesate și folosirea arborelui
-pentru analiză pot fi implementate separat, comunicând prin acest arbore.
-Aceasta simplifică realizarea sistemului, impărțindu-l în două module majore cu responsabilitățile respective,
-care pot fi implementate în izolare, conform interfeței arborelui.
-
-Folosirea unui arbore este cea mai evidentă abordare pentru sistemul în cauză.
-Această abordare divizează sistemul la bucata care construiește arborele
-(partea de citire a fișierului, parser-ul, și codul care creează și gestionează alocarea nodurilor),
-și bucata care analizează arborele derivat (interfața grafică în cazul dat).
-Aceste bucăți pot fi realizate separat, ceea ce simplifică procesul de dezvoltare.
-
-\subsection{Imaginea modulului grafic}
-
-Sunt foarte multe lucruri interesante care ar putea fi implementate pentru vizualizare, printre care:
+В C\# с использованием Entity Framework Core существует два основных подхода к работе с базами данных:
 \begin{itemize}
     \item
-        Un editor hexazecimal care afișează octeții cruzi din fișierul \ac{PNG}. 
+        \textbf{Code-First} -- сначала создается код, то есть модели, а затем на его основе формируется база данных.
     \item
-        Posibilitatea de a transforma editorul hexazecimal într-un editor binar.
-        Acesta ar putea fi util pentru a putea vedea mai bine limitele câmpurilor din
-        subformatul Zlib care pot apărea la poziții neîntregi de octeți.
-    \item
-        Posibilitatea de a face modificări la fișier inițial, folosind editorul,
-        și ca arborele de fișier să fie actualizat în urma schimbărilor.
-        Implementarea aceastei capacități ar fi mai ușoară de făcut dacă s-ar fi realizată
-        o abstrație pentru mașina de stări, explicată în unul din paragrafe.
-    \item
-        Selectarea intervalului curent vizualizat.
-    \item
-        Afișarea imaginii încărcate.
-    \item
-        Afișarea nodurilor intermediare și informațiilor despre ele în adâncime.
-    \item
-        Posibilitatea de a selecta fișierul care trebuie să fie încărcat.
+        \textbf{Database-First} -- сначала создается база данных, затем на ее основе автоматически генерируются модели.
 \end{itemize}
 
-În \refFigure{interface_sketch.png} este prezentată o schiță a interfeței grafice,
-așa cum era imaginată la etapa incipientă.
-În sfârșit, nu au fost implementate săgețile.
+\subsection{Обоснование выбора подхода для текущего проекта}
 
-\imageWithCaption{interface_sketch.png}{Schița interfeței grafice}
+Для данной работы был выбран подход Code-First, так как база данных создается с нуля.
 
-Pentru a limita complexitatea proiectului, s-a hotărât să fie implementate doar capacitățile de bază.
-A fost implementat un editor hexazecimal pentru vizualizare, posibilitatea de a selecta intervalul,
-reprezentarea informațiilor despre câmpul selectat din fișier, și drag-and-drop pentru fișiere.
-În plus, intervalul câmpului curent terminal din fișier este evidențiat în editorul grafic.
+\section{Проектирование структуры базы данных}
 
-\section{Zlib și DEFLATE}
+\subsection{Разработка ER-диаграммы базы данных}
 
-\subsection{Zlib în \ac{PNG}}
+\subsection{Описание ключевых сущностей и их атрибутов}
 
-Pentru a înțelege problema mai bine, ar fi benefic să se înțeleagă cum funcționează algoritmul Zlib.
-În plus, deoarece algorimul face parte din standardul \ac{PNG},
-și structura acestuia poate fi decodificată și analizată,
-ar fi benefic să fie realizat un fel de parser special pentru Zlib pentru a putea vizualiza nodurile Zlib
-în mod bogat în interfață.
-Din aceast motiv, s-a decis să se realizeze implementarea unui decodor Zlib de la zero.
-
-Structura parserului menționată până acum poate fi aplicată și pentru formatul Zlib.
-Singura diferență este că formatul Zlib este bazat pe biți, dar nu pe octeți.
-Însă, deoarece poziția pe biți absolut nu ține de gestionarea buferilor,
-componenta \texttt{pipelines} care realizează fluxul de date nu va trebui să fie modificată.
-Starea parserului Zlib poate să țină cont de poziția pe biți ca o variabilă privată, deoarece
-acest concept nu se răsfrânge asupra procesării \ac{PNG}.
-Însă, poziția pe biți ar trebui să fie utilă pentru a vizualiza formatul.
-
-În structura finală a aplicației, poziția pe biți a componentelor din fluxul de date a fost salvată la crearea nodurilor.
-
-Mai complicat conceptual este sistemul de decomprimare,
-deoarece acesta trebuie să păstreze octeții decodificați pentru a putea referi la acestea
-în procesul de decomprimare, până la 32 KB de date.
-
-A fost realizată o abordare simplă --- se păstrează toți octeții într-un bufer dinamic.
-S-ar putea aplica o abordare mai complexă, însă acest element al programului
-nu este atât de important sau interesant din punct de vedere al formatului pentru a merita optimizarea.
-
-\subsection{Testarea implementării}
-
-Problema legată de testare este faptul că, deoarece programul este orientat
-la decomprimare și nici nu realizează un compresor,
-este dificil să genereze niște date pentru teste.
-
-Sunt două variante care ar putea fi folosite:
-\begin{enumerate}
-    \item
-        Se poate folosi un compresor existent, adică o altă librarie, pentru a genera datele.
-        Dezavantajul acestei abordări este faptul că codul de generare a datelor atunci va exista
-        ca un modul independent și nu poate fi ușor folosită abordarea "kitchen sink", adică
-        compresia dintr-o structură de date, și urmând-o decompresia, după ce să se verifice
-        dacă rezultatul este echivalent cu structura de date originală.
-        Însă, testarea de așa fel n-ar fi de neatins --- cu o anumită măsură de lucru,
-        poate fi realizat un sistem care permite testele declarative folosind așa abordare.
-    \item
-        Se poate găsi niște date de test, și a le folosi pentru a face testarea
-        întregului sistem, cu diferite intrări, fără a înțelege toate nuanțele datelor de intrare.
-        Adică, dacă se găsește o eroare pentru un samplu corect -- testul eșuează,
-        și invers, pentru un samplu incorect decompresia trebuie să eșueze.
-        Una din referințe \cite{gzip_impl} folosește așa abordare pentru teste negative,
-        însă are datele pentru formatul gzip, dar nu zlib, din care cauză acestea nu au putut fi folosite.
-\end{enumerate}
-
-De fapt, există și încă o abordare -- să nu facă testarea la modulul zlib direct.
-La început, această abordare este cea mai aplicabilă pentru a putea să se miște cât mai repede cu versiunea inițială.
-
-Testarea indirectă oricum va fi folosită la testarea intrărilor diferite ale formatului \ac{PNG},
-deoarece acesta numaidecât folosește Zlib pentru chunk-urile \texttt{IDAT} care trebuie să fie prezente
-în orice exemplu de fișier \ac{PNG}.
-
-În plus, decodificarea deja este verificată conform câmpului de suma de control Adler32,
-care în cazul dacă corespunde valorii acestei sume de control calculate pe baza biților decodificați,
-indică probabilitatea înaltă că fișierul a fost decodificat corect. 
-De notat că probabilitatea este înaltă, dar nu categorică din cauza
-că aceasta este într-un fel o funcție hash care nu dă garanții
-exacte față de integritate, ci doar o certitudine înaltă.
-
-Mai târziu au fost găsite datele test pentru algoritmul DEFLATE,
-mecanismul dinamic, pentru depanare\cite{deflate_tests}.
-
+\subsection{Определение связей между таблицами}
 
 \chapterConclusionSection{architecture_chapter_title}
 
