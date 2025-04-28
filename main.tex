@@ -410,7 +410,7 @@ Dependency Injection включает в себя 3 типа классов:
 \textbf{Атрибуты сущности Товар:}
 \begin{enumerate}
     \item
-        Id (int) -- уникальный идентификатор заказа.
+        Id (int) -- уникальный идентификатор товара.
     \item
         Name (string) -- название модели товара.
     \item
@@ -429,6 +429,35 @@ Dependency Injection включает в себя 3 типа классов:
         [Column(TypeName = "decimal(18,2)")]  
         public decimal Price { get; set; }  
     }
+\end{minted}
+
+Сущность Order представляет собой заказ, который содержит информацию о списке товаров.
+\textbf{Атрибуты сущности Заказ:}
+\begin{enumerate}
+    \item
+        Id (int) -- уникальный идентификатор заказа.
+    \item
+        DateTime (DateTime) -- время создания заказа.
+    \item
+        Status (OrderStatus) -- состояние, в котором находится товар.
+    \item
+        Items (List<OrderItem>) -- id и количество товара.
+    \item
+        TotalPrice (decimal) -- общая стоимость товаров.
+    \item
+        PaymentMethod (PaymentMethod) -- метод оплаты товаров.
+\end{enumerate}
+
+\begin{minted}{csharp}
+    public class Order
+{
+    public int Id { get; set; }
+    public DateTime DateTime { get; set; }
+    public OrderStatus Status { get; set; }
+    public List<OrderItem> Items { get; set; } = new List<OrderItem>();
+    public decimal TotalPrice { get; set; }
+    public PaymentMethod PaymentMethod { get; set; }
+}
 \end{minted}
 
 \subsection{Разработка ER-диаграммы базы данных}
