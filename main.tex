@@ -3,19 +3,25 @@
 
 % Description
 \newcommand{\authorName}{GRAMA Alina}
-\newcommand{\thesisTitle}{Разработка web API на C\#}  % на румынском?
-\newcommand{\thesisTitleEng}{Developing a web API in C\#}
+\newcommand{\authorNameRu}{ГРАМА Алина}
+\newcommand{\thesisTitleRu}{Разработка web API на C\#}
+\newcommand{\thesisTitle}{Dezvoltarea unei API web în C\#}
 \newcommand{\uniGroupName}{DJ2203}
 \newcommand{\thesisType}{licență}
 \newcommand{\programulDeStudii}{licență}
+\newcommand{\programulDeStudiiRu}{Дипломная работа}
 \newcommand{\identificatorulCursului}{0211.7 Designul jocurilor}
+\newcommand{\identificatorulCursuluiRu}{0211.7 Гейм дизайн}
 
 \renewcommand{\year}{2025}
 \newcommand{\location}{Chișinău}
+\newcommand{\locationRu}{Кишинев}
 \newcommand{\conferencesList}{Conferința Studențească, Editia XXVIII-a, \year}
 \newcommand{\conducatorNume}{Curmanschii}
 \newcommand{\conducatorPrenume}{Anton}
-\newcommand{\github}{\url{                           }}
+\newcommand{\conducatorNumeRu}{Курманский}
+\newcommand{\conducatorPrenumeRu}{Антон}
+\newcommand{\github}{\url{https://github.com/adelinegrama/webAPI.git}}
 \newcommand{\chapterCount}{3}
 
 \begin{document}
@@ -618,7 +624,8 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
 
 \section{Введение}
 
-Следует реализация архитектуры системы приложения, которое представляет собой простой магазин с основными операциями.
+Следует реализация архитектуры системы приложения, которое представляет собой простой магазин с основными операциями. 
+При разработке системы внимание уделялось разделению ответственности между компонентами системы.
 
 \section{\acs{DTO}}
 
@@ -754,7 +761,10 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
 
 \section{Контроллеры}
 
-Контроллер -- точка входа HTTP-запросов в \acs{API}. Он реализует бизнес-логику приложения и действует как мост между \acs{HTTP} и сущностями базы данных. 
+Контроллер -- точка входа HTTP-запросов в \acs{API}. Он отвечает за приём \acs{HTTP}-запросов и формирование \acs{HTTP}-ответов, 
+действует как мост между \acs{HTTP} и сущностями базы данных, а также, следует принципу единой ответственности, то есть реализует 
+только \acs{CRUD}-операции. Вся бизнес-логика и сложные проверки выносится в сервисный слой, а контроллеры лишь вызывают нужные 
+методы и возвращают результат клиенту.
 
 У каждого контроллера есть декорации, которые определяют, что данный класс будет именно контроллером:
 \begin{minted}{csharp}
@@ -763,7 +773,7 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
     public class ProductController : ControllerBase
 \end{minted}
 
-Внедряются зависимости, где \texttt{ShopContext} дает доступ к базе данных через \acs{EF} Core, а \texttt{IMapper} (из \texttt{AutoMapper}) 
+Внедряются зависимости, где \texttt{ShopContext} класс дает доступ к базе данных через \acs{EF} Core, а \texttt{IMapper} (из \texttt{AutoMapper}) 
 нужен для преобразования между \acs{DTO} и сущностями.
 \begin{minted}{csharp}
     private readonly ShopContext _shopContext;
@@ -824,7 +834,95 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
     
 \section{Миграции}
 
+Миграции позволяют постепенно обновлять схему базы данных, чтобы поддерживать ее синхронизацию 
+с моделью данных приложения, сохраняя при этом существующие данные в базе данных.\cite{migration}
 
+\textbf{Миграции позволяют:}
+\begin{itemize}
+    \item
+        Отслеживать изменения в моделях (в классе \texttt{ShopContext} и сущностях).
+    \item
+        Автоматически генерировать \acs{SQL}-код для обновления схемы базы данных под данные изменения.
+    \item
+        Управлять историей изменений через файлы миграций с методами \texttt{Up()} (применить) и \texttt{Down()} (откатить).
+    \item
+        Восстанавливать базу данных до любого сохраненного состояния.
+\end{itemize}
+
+\textbf{Настройка строки подключения в классах \texttt{Program} и \texttt{appsettings.json}:}
+
+В классе \texttt{Program}:
+\begin{minted}{csharp}
+    var builder = WebApplication.CreateBuilder(args);
+    var connectionString = builder.Configuration.GetConnectionString("ShopContext") ??
+        throw new InvalidOperationException("Connection string 'ShopContext' not found");
+    builder.Services.AddDbContext<ShopContext>(options =>
+        options.UseSqlServer(connectionString));
+\end{minted}
+
+В классе \texttt{appsettings.json}:
+\begin{minted}{csharp}
+  "ConnectionStrings": {
+    "ShopContext": "Server=DESKTOP-OFSA363\\SQLEXPRESS;Database=ShopDB;Trusted_Connection=True;TrustServerCertificate=True;"
+}
+\end{minted}
+
+\textbf{Для создания и применения новой миграции требуется выполнить следующие консольные команды:}
+\begin{enumerate}
+    \item
+        Создание:
+
+        \texttt{dotnet ef migrations add <MigrationName>}
+    \item
+        Применение:
+
+        \texttt{dotnet ef database update}
+\end{enumerate}
+
+\section{Unit-тестирование}
+
+Unit-тесты проверяют отдельные части приложения независимо от его инфраструктуры и внешних зависимостей. 
+При этом тестируется только логика конкретного действия контроллера, без учёта работы его зависимостей.
+Unit-тесты проверяют только логику внутри метода, не задействуя базу данных. Каждый тест должен выполняться 
+за миллисекунды и не зависеть от порядка. Следует создавать тесты простыми и фокусированными на одной проверке, 
+а также, называть методы по схеме: Метод\_Сценарий\_ОжидаемыйРезультат.
+
+У каждого юнит-теста есть декорации, которые определяют, что данный класс и методы будут частью юнит-теста: 
+\texttt{[TestClass]} и \texttt{[TestMethod]}.
+
+\subsection{Шаблон AAA (Arrange-Act-Assert)}
+\begin{itemize}
+    \item
+        Arrange -- подготовка входных данных.
+    \item
+        Act -- вызов тестируемого метода.
+    \item
+        Assert -- проверка результата, то есть возвращаемого значения, статуса ответа или исключения.
+\end{itemize}
+
+\subsection{Заглушки в unit-тестах}
+Заглушка -- тестовый объект, который возвращает заранее определённые данные, 
+но сам по себе не содержит логики. При unit-тестировании заглушки подставляют вместо реальных зависимостей, 
+чтобы закрепить поведение метода в контроллере и фокусироваться только на логике.
+
+\textbf{Преимущества заглушек:}
+\begin{enumerate}
+    \item
+        Заглушки избавляют от необходимости держать тестируемый код привязанным к базе данных.
+    \item
+        Они всегда возвращают предсказуемый результат, упрощая проверку "Arrange-Act-Assert".
+    \item
+        Тесты с заглушками выполняются мгновенно, без реальных запросов.
+\end{enumerate}
+
+\subsection{Moq}
+
+Moq - библиотека для создания мок-объектов. Она позволяет подменять реализации зависимостей на управляемые объекты, 
+настраивать их поведение и проверять, как тестируемый код с ними взаимодействует. Следует использовать moq для внешних зависимостей, 
+а не для самой логики, которая тестируется. Если использовать \texttt{Setup().Returns()} и не вызывать \texttt{Verify()}, то мок ведет себя как заглушка, 
+но если добавить \texttt{Verify()}, то можно использовать все возможности mock-объекта. 
+
+    
 \unnumberedChapter{Окончательные выводы и рекомендации}
 
 În această lucrare a fost discutată importanța cunoașterii formatului \ac{PNG}.
