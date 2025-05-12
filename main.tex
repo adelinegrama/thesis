@@ -443,6 +443,8 @@ Modular Monolith -- монолитное приложение, разделён�
 
 \subsection{Разработка ER-диаграммы базы данных}
 
+\imageWithCaption{er-diagram}{ER-диаграмма}
+
 \subsection{Описание ключевых сущностей и их атрибутов}
 
 В рамках проектирования базы данных были определены основные сущности, необходимые для функционирования веб-приложения магазина такие как: товар и заказ.
@@ -777,7 +779,8 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
 только \acs{CRUD}-операции. Вся бизнес-логика и сложные проверки выносится в сервисный слой, а контроллеры лишь вызывают нужные 
 методы и возвращают результат клиенту.
 
-У каждого контроллера есть декорации, которые определяют, что данный класс будет именно контроллером:
+У каждого контроллера есть декорации, которые определяют, что данный класс будет именно контроллером, 
+а также, класс, от которого наследует контроллер:
 \begin{minted}{csharp}
     [Route("api/[controller]")]
     [ApiController]
@@ -805,6 +808,9 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
 \begin{minted}{csharp}
     [HttpPost]
     public async Task<ActionResult<ProductDto>> AddProduct([FromBody] CreateProductDto createDto)
+
+    [HttpPost]
+    public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] CreateOrderDto createDto)
 \end{minted}
 
 \begin{itemize}
@@ -814,6 +820,9 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
 \begin{minted}{csharp}
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetOrders()
 \end{minted}
 
 \begin{itemize}
@@ -822,7 +831,10 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
 
 \begin{minted}{csharp}
     [HttpGet("{id}")]
-    public async Task<ActionResult<ProductDto>> GetProduct(int id)   
+    public async Task<ActionResult<ProductDto>> GetProduct(int id)
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<OrderDto>> GetOrder(int id) 
 \end{minted}
 
 \begin{itemize}
@@ -831,7 +843,10 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
 
 \begin{minted}{csharp}
     [HttpPut("{id}")]
-    public async Task<ActionResult<ProductDto>> UpdateProduct(int id, [FromBody] UpdateProductDto updateDto)  
+    public async Task<ActionResult<ProductDto>> UpdateProduct(int id, [FromBody] UpdateProductDto updateDto)
+    
+    [HttpPut("{id}")]
+    public async Task<ActionResult<OrderDto>> UpdateOrder(int id, [FromBody] UpdateOrderDto updateDto)
 \end{minted}
 
 \begin{itemize}
@@ -840,8 +855,143 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
     
 \begin{minted}{csharp}
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteProduct(int id) 
+    public async Task<IActionResult> DeleteProduct(int id)
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteOrder(int id)
 \end{minted}
+
+\subsection{\acs{CRUD}-операции}
+
+\acs{CRUD} -- базовые операции для работы с данными в веб-\acs{API} приложении.
+
+\textbf{Создание:}
+
+Класс \texttt{ProductController}:
+\begin{minted}{csharp}
+    var product = _mapper.Map<Product>(createDto);
+    _shopContext.Products.Add(product);
+    await _shopContext.SaveChangesAsync();
+
+    var productDto = _mapper.Map<ProductDto>(product);
+    return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, productDto);
+\end{minted}
+
+Класс \texttt{OrderController}:
+\begin{minted}{csharp}
+    var productIds = createDto.Items.Select(i => i.ProductId).ToList();
+    var products = await _context.Products
+        .Where(p => productIds.Contains(p.Id))
+        .ToListAsync();
+
+        
+    var order = _mapper.Map<Order>(createDto);
+
+    order.TotalPrice = createDto.Items.Sum(i =>
+    {
+        var prod = products.First(p => p.Id == i.ProductId);
+        return prod.Price * i.Quantity;
+    });
+
+    _context.Orders.Add(order);
+    await _context.SaveChangesAsync();
+
+    var orderDto = _mapper.Map<OrderDto>(order);
+    return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, orderDto);
+\end{minted}
+
+\textbf{Чтение списка:}
+
+Класс \texttt{ProductController}:
+\begin{minted}{csharp}
+    var products = await _shopContext.Products.ToListAsync();
+    return Ok(_mapper.Map<IEnumerable<ProductDto>>(products));
+\end{minted}
+
+Класс \texttt{OrderController}:
+\begin{minted}{csharp}
+    var orders = await _context.Orders
+        .Include(o => o.Items)
+        .ToListAsync();
+
+    return Ok(_mapper.Map<IEnumerable<OrderDto>>(orders));
+\end{minted}
+
+\textbf{Чтение по id:}
+
+Класс \texttt{ProductController}:
+\begin{minted}{csharp}
+    var product = await _shopContext.Products.FindAsync(id);
+        if (product == null)
+            return NotFound();
+
+    return _mapper.Map<ProductDto>(product);
+\end{minted}
+
+Класс \texttt{OrderController}:
+\begin{minted}{csharp}
+    var order = await _context.Orders
+        .Include(o => o.Items)
+        .FirstOrDefaultAsync(o => o.Id == id);
+
+    if (order == null)
+        return NotFound();
+
+    eturn _mapper.Map<OrderDto>(order);
+\end{minted}
+
+\textbf{Обновление:}
+
+Класс \texttt{ProductController}:
+\begin{minted}{csharp}
+    var product = await _shopContext.Products.FindAsync(id);
+    if (product == null)
+        return NotFound();
+
+    _mapper.Map(updateDto, product);
+    await _shopContext.SaveChangesAsync();
+
+    return Ok(_mapper.Map<ProductDto>(product));
+\end{minted}
+
+Класс \texttt{OrderController}:
+\begin{minted}{csharp}
+    var order = await _context.Orders.FindAsync(id);
+    if (order == null)
+        return NotFound();
+
+    _mapper.Map(updateDto, order);
+    await _context.SaveChangesAsync();
+
+    return Ok(_mapper.Map<OrderDto>(order));
+\end{minted}
+
+\textbf{Удаление:}
+
+Класс \texttt{ProductController}:
+\begin{minted}{csharp}
+    var product = await _shopContext.Products.FindAsync(id);
+    if (product == null)
+        return NotFound("Product not found.");
+
+    _shopContext.Products.Remove(product);
+    await _shopContext.SaveChangesAsync();
+
+    return NoContent();
+\end{minted}
+
+Класс \texttt{OrderController}:
+\begin{minted}{csharp}
+    var order = await _context.Orders.FindAsync(id);
+    if (order == null)
+        return NotFound();
+
+    _context.Orders.Remove(order);
+    await _context.SaveChangesAsync();
+
+    return NoContent();
+\end{minted}
+
     
 \section{Миграции}
 
