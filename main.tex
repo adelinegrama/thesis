@@ -1081,8 +1081,8 @@ Unit-тесты проверяют только логику внутри мет
 
 Moq - библиотека для создания мок-объектов. Она позволяет подменять реализации зависимостей на управляемые объекты, 
 настраивать их поведение и проверять, как тестируемый код с ними взаимодействует. Следует использовать moq для внешних зависимостей, 
-а не для самой логики, которая тестируется. Если использовать \texttt{Setup().Returns()} и не вызывать \texttt{Verify()}, то мок ведет себя как заглушка, 
-но если добавить \texttt{Verify()}, то можно использовать все возможности mock-объекта. 
+а не для самой логики, которая тестируется. Если использовать \texttt{Setup().Returns()} и не вызывать \texttt{Verify()}, 
+то мок ведет себя как заглушка, но если добавить \texttt{Verify()}, то можно использовать все возможности mock-объекта. 
 
     
 \unnumberedChapter{Окончательные выводы и рекомендации}
@@ -1092,14 +1092,7 @@ Moq - библиотека для создания мок-объектов. Он
 в написании веб-\acs{API} приложений, но и еще одной из самых универсальных экосистем разработки, которая 
 предоставляет полный набор встроенных инструментов для создания веб-\acs{API} приложений.
 
-Formatul de comprimare Zlib folosit în \ac{PNG},
-cu toate că nu este însuși folosit pe scară largă în aplicații,
-folosește subformatul DEFLATE care este o parte esențială a mai multor alți algoritmi.
-DEFLATE folosește arbori Huffman care pot fi utili pentru orice aplicație
-unde este necesar un mod de codificare eficient.
-
-Был обсужден процесс разработки приложения простого магазина, который выполняет \acs{CRUD}-операции. 
-
+Также, был обсужден процесс разработки приложения простого магазина, который выполняет \acs{CRUD}-операции. 
 
 Текст данной работы можно получить на GitHub по следующей ссылке: \githubthesis, 
 а весь исходный код, можно получить на GitHub по следующей ссылке: \githubwebAPI.
@@ -1111,7 +1104,7 @@ unde este necesar un mod de codificare eficient.
 
 
 % Bibliography
-\bibliographystyle{plain}
+\bibliographystyle{ieeetr}
 \bibliography{bibliography}
 \addcontentsline{toc}{chapter}{\bibname}
 
