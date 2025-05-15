@@ -5,7 +5,7 @@
 \newcommand{\authorName}{GRAMA Alina}
 \newcommand{\authorNameRu}{ГРАМА Алина}
 \newcommand{\thesisTitleRu}{Разработка web API на C\#}
-\newcommand{\thesisTitle}{Dezvoltarea unei API web în C\#}
+\newcommand{\thesisTitle}{Dezvoltarea unui web API în C\#}
 \newcommand{\uniGroupName}{DJ2203}
 \newcommand{\thesisType}{licență}
 \newcommand{\programulDeStudii}{licență}
@@ -993,6 +993,51 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
     return NoContent();
 \end{minted}
 
+\section{Создание базы данных}
+
+База данных -- одна из главных частей веб-\acs{API} приложения, 
+обеспечивающее долговременное хранение и целостность бизнес-данных.
+
+\textbf{Характеристики базы данных:}
+\begin{itemize}
+    \item
+        Организованное хранение данных: данные хранятся в структурированных 
+        форматах, таких как таблицы, документы или пары ключ-значение.
+    \item
+        Эффективный доступ: расширенные возможности поиска и запросов позволяют быстро извлекать данные.
+    \item
+        Безопасность и масштабируемость: базы данных обеспечивают надежные меры 
+        безопасности и могут масштабироваться по мере роста потребностей в данных.\cite{database}
+\end{itemize}
+
+\textbf{Для создания базы данных в SQL Server нужно выполнить следующие шаги:}
+\begin{enumerate}
+    \item
+        Подключение к серверу: в SQL Server Management Studio в окне "Connect to Server" 
+        указывается имя инстанса, способ аутентификации и нажимается "Connect".
+    \item
+        Создание базы данных: в Object Explorer в Databases выбирается New Database 
+        и вводится имя базы данных.
+\end{enumerate}
+
+\textbf{Для того, чтобы приложение было связно с базой данных требуется настроить 
+строку подключения в классах \texttt{Program} и \texttt{appsettings.json}:}
+
+В классе \texttt{Program}:
+\begin{minted}{csharp}
+    var builder = WebApplication.CreateBuilder(args);
+    var connectionString = builder.Configuration.GetConnectionString("ShopContext") ??
+        throw new InvalidOperationException("Connection string 'ShopContext' not found");
+    builder.Services.AddDbContext<ShopContext>(options =>
+        options.UseSqlServer(connectionString));
+\end{minted}
+
+В классе \texttt{appsettings.json}:
+\begin{minted}{csharp}
+  "ConnectionStrings": {
+    "ShopContext": "Server=DESKTOP\\SQLEXPRESS;Database=ShopDB;Trusted_Connection=True;TrustServerCertificate=True;"
+}
+\end{minted}
     
 \section{Миграции}
 
@@ -1010,24 +1055,6 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
     \item
         Восстанавливать базу данных до любого сохраненного состояния.
 \end{itemize}
-
-\textbf{Настройка строки подключения в классах \texttt{Program} и \texttt{appsettings.json}:}
-
-В классе \texttt{Program}:
-\begin{minted}{csharp}
-    var builder = WebApplication.CreateBuilder(args);
-    var connectionString = builder.Configuration.GetConnectionString("ShopContext") ??
-        throw new InvalidOperationException("Connection string 'ShopContext' not found");
-    builder.Services.AddDbContext<ShopContext>(options =>
-        options.UseSqlServer(connectionString));
-\end{minted}
-
-В классе \texttt{appsettings.json}:
-\begin{minted}{csharp}
-  "ConnectionStrings": {
-    "ShopContext": "Server=DESKTOP-OFSA363\\SQLEXPRESS;Database=ShopDB;Trusted_Connection=True;TrustServerCertificate=True;"
-}
-\end{minted}
 
 \textbf{Для создания и применения новой миграции требуется выполнить следующие консольные команды:}
 \begin{enumerate}
@@ -1049,7 +1076,7 @@ Unit-тесты проверяют только логику внутри мет
 за миллисекунды и не зависеть от порядка. Следует создавать тесты простыми и фокусированными на одной проверке, 
 а также, называть методы по схеме: Метод\_Сценарий\_ОжидаемыйРезультат.
 
-У каждого юнит-теста есть декорации, которые определяют, что данный класс и методы будут частью юнит-теста: 
+У каждого unit-теста есть декорации, которые определяют, что данный класс и методы будут частью unit-теста: 
 \texttt{[TestClass]} и \texttt{[TestMethod]}.
 
 \subsection{Шаблон AAA (Arrange-Act-Assert)}
@@ -1072,7 +1099,7 @@ Unit-тесты проверяют только логику внутри мет
     \item
         Заглушки избавляют от необходимости держать тестируемый код привязанным к базе данных.
     \item
-        Они всегда возвращают предсказуемый результат, упрощая проверку "Arrange-Act-Assert".
+        Всегда возвращают предсказуемый результат, упрощая проверку "Arrange-Act-Assert".
     \item
         Тесты с заглушками выполняются мгновенно, без реальных запросов.
 \end{enumerate}
@@ -1090,9 +1117,17 @@ Moq - библиотека для создания мок-объектов. Он
 В данной работе была обсуждена важность изучения веб-\acs{API} для создания современных приложений. 
 В ходе изучения веб-\acs{API} ASP.NET Core стало ясно, что данная технология является не только стандартом 
 в написании веб-\acs{API} приложений, но и еще одной из самых универсальных экосистем разработки, которая 
-предоставляет полный набор встроенных инструментов для создания веб-\acs{API} приложений.
+предоставляет полный набор встроенных инструментов для создания веб-\acs{API} приложений. Также, был обсужден 
+процесс разработки приложения простого магазина, который выполняет \acs{CRUD}-операции.
 
-Также, был обсужден процесс разработки приложения простого магазина, который выполняет \acs{CRUD}-операции. 
+Выполнение данной работы стало для автора ценным практическим опытом, существенно углубившим понимание 
+архитектуры веб-\acs{API} и особенностей разработки на платформе ASP.NET Core. 
+Благодаря самостоятельному решению задач проектирования, настройки миграций и тестирования, 
+автор приобрел уверенные навыки работы с \acs{EF} Core, внедрением валидации и асинхронных контроллеров. 
+Этот опыт послужил прочным фундаментом для дальнейшего профессионального роста, расширил технический 
+кругозор и укрепил готовность к реализации более сложных и масштабных проектов в будущем, а также, 
+реализации проекта, который упоминался в мотивации создания приложения.
+
 
 Текст данной работы можно получить на GitHub по следующей ссылке: \githubthesis, 
 а весь исходный код, можно получить на GitHub по следующей ссылке: \githubwebAPI.
@@ -1104,7 +1139,7 @@ Moq - библиотека для создания мок-объектов. Он
 
 
 % Bibliography
-\bibliographystyle{ieeetr}
+\bibliographystyle{plain}
 \bibliography{bibliography}
 \addcontentsline{toc}{chapter}{\bibname}
 
