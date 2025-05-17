@@ -31,15 +31,20 @@
 \usepackage{setspace}
 \setstretch{1.5}
 
+\usepackage{csquotes}
+
 % Being able to copy-paste from the document
 % Display the diacritics correctly
 \usepackage{fontspec}
 % Times New Roman font
 \setmainfont{Times New Roman}
+\setmonofont{Liberation Mono}[Scale=MatchLowercase]
 
 % Romanian language support
 \usepackage{polyglossia}
 \setdefaultlanguage{russian}
+\newfontfamily\cyrillicfont{Times New Roman}
+\newfontfamily\cyrillicfonttt{Liberation Mono}[Scale=MatchLowercase]
 
 % Appendices
 \usepackage[toc,page]{appendix}
@@ -155,7 +160,6 @@
   \ensuremath{%
     \vphantom{\underscores{#1}}%
     \smash{\underset{\text{(semnătură)}}{\underscores{#1}}}%
-    
   }%
 }
 
@@ -163,7 +167,6 @@
   \ensuremath{%
     \vphantom{\underscores{#1}}%
     \smash{\underset{\text{(подпись)}}{\underscores{#1}}}%
-    
   }%
 }
 
