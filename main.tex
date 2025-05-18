@@ -573,18 +573,20 @@ Modular Monolith -- монолитное приложение, разделен�
         Один к одному.
 \end{enumerate}
 
-\subsection{Многие ко многим}
+\subsection{Типы связей между сущностями}
+
+\textbf{Многие ко многим}
 
 В модели "многие ко многим" каждая запись таблицы A может быть связана сразу с несколькими записями таблицы B, 
 и одновременно любая запись таблицы B может иметь ссылки на множество записей таблицы A.
 
-\subsection{Один ко многим}
+\textbf{Один ко многим}
 
 В типе связей "один ко многим" несколько строк из дочерний таблицы зависят от одной строки в родительской таблице.
 Данный тип связи поддерживается через внешние ключи в дочерней таблице, значение которых должно либо совпадать 
 с существующим первичным ключом родителя, либо быть NULL.
 
-\subsection{Один к одному}
+\textbf{Один к одному}
 
 В данном типе связей объекту одной сущности можно сопоставить только один объект другой сущности.
 Этот тип связей предполагает разбиение одной большой таблицы на несколько маленьких. 
@@ -783,6 +785,189 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
     }
 \end{minted}
 
+\section{Services}
+
+Services в данном проекте, то есть Уровень бизнес-логики четко отделяет Уровень представления от 
+Уровня доступа к данным, предоставляя контроллерам интерфейсы \texttt{IProductService} и \texttt{IOrderService} 
+для работы с сущностями и скрывая детали взаимодействия с \acs{EF} Core и базой данных.
+
+Реализация классом \texttt{ProductService} интерфейса \texttt{IProductService} 
+умеет создавать, получать, обновлять и удалять товары, то же самое происходит 
+и с классом \texttt{OrderService}, который реализует интерфейс \texttt{IOrderService} 
+и может создавать, получать, обновлять и удалять заказы. Интерфейсы не разглашают 
+детали внутренней работы \acs{EF} Core, вычислений, валидации, оставаясь только контрактами.
+
+\textbf{Класс \texttt{IProductService}:}
+\begin{minted}{csharp}
+    public interface IProductService
+    {
+        Task<ProductDto> CreateAsync(CreateProductDto dto);
+        Task<IEnumerable<ProductDto>> GetAllAsync();
+        Task<ProductDto?> GetByIdAsync(int id);
+        Task<ProductDto?> UpdateAsync(int id, UpdateProductDto dto);
+        Task<bool> DeleteAsync(int id);
+    }
+\end{minted}
+
+\textbf{Класс \texttt{IOrderService}:}
+\begin{minted}{csharp}
+    public interface IOrderService
+    {
+        Task<OrderDto> CreateAsync(CreateOrderDto dto);
+        Task<IEnumerable<OrderDto>> GetAllAsync();
+        Task<OrderDto?> GetByIdAsync(int id);
+        Task<OrderDto?> UpdateAsync(int id, UpdateOrderDto dto);
+        Task<bool> DeleteAsync(int id);
+    }
+\end{minted}
+
+Для классов \texttt{ProductService} и \texttt{OrderService} внедряются зависимости, 
+где \texttt{ShopContext} класс дает доступ к базе данных через \acs{EF} Core, 
+а \texttt{IMapper} (из \texttt{AutoMapper}) нужен для преобразования между 
+\acs{DTO} и сущностями.
+
+Для класса \texttt{ProductService}:
+\begin{minted}{csharp}
+    public ProductService(ShopContext context, IMapper mapper)
+    {
+        _context = context;
+        _mapper = mapper;
+    }
+\end{minted}
+
+Для класса \texttt{OrderService}:
+\begin{minted}{csharp}
+    public OrderService(ShopContext context, IMapper mapper)
+    {
+        _context = context;
+        _mapper = mapper;
+    }
+\end{minted}
+
+Данный метод класса \texttt{ProductService} принимает \acs{DTO} для создания нового продукта, 
+превращает его в сущность с помощью \texttt{AutoMapper}, сохраняет 
+в базу через \texttt{DbContext}, затем возвращает вновь созданный объект в виде \acs{DTO}:
+\begin{minted}{csharp}
+    public async Task<ProductDto> CreateAsync(CreateProductDto dto)
+    {
+        var entity = _mapper.Map<Product>(dto);
+        _context.Products.Add(entity);
+        await _context.SaveChangesAsync();
+        return _mapper.Map<ProductDto>(entity);
+    }
+\end{minted}
+
+Метод \texttt{GetAllAsync()} загружает из базы весь список продуктов \texttt{ToListAsync}, маппит каждую 
+сущность в \acs{DTO} и возвращает коллекцию \acs{DTO}.
+\begin{minted}{csharp}
+    public async Task<IEnumerable<ProductDto>> GetAllAsync()
+    {
+        var list = await _context.Products.ToListAsync();
+        return _mapper.Map<IEnumerable<ProductDto>>(list);
+    }
+\end{minted}
+
+Данный метод ищет в базе данных продукт по первичному ключу \texttt{id} (\texttt{FindAsync}), 
+если найдён, то маппит его в \acs{DTO}, иначе возвращает \texttt{null}.
+\begin{minted}{csharp}
+    public async Task<ProductDto?> GetByIdAsync(int id)
+    {
+        var entity = await _context.Products.FindAsync(id);
+        return entity == null ? null : _mapper.Map<ProductDto>(entity);
+    }
+\end{minted}
+
+Метод \texttt{UpdateAsync(int id, UpdateProductDto dto)} находит существующую сущность по \texttt{id}, если её нет, то возвращает \textt{null}, 
+иначе применяет изменения из \acs{DTO}, сохраняет изменения и возвращает обновленный продукт в виде \acs{DTO}.
+\begin{minted}{csharp}
+    public async Task<ProductDto?> UpdateAsync(int id, UpdateProductDto dto)
+    {
+        var entity = await _context.Products.FindAsync(id);
+        if (entity == null) return null;
+        _mapper.Map(dto, entity);
+        await _context.SaveChangesAsync();
+        return _mapper.Map<ProductDto>(entity);
+    }
+\end{minted}
+
+Данный метод ищет продукт по \texttt{id}, если его нет, то возвращает \texttt{false}, 
+иначе удаляет из контекста, сохраняет изменения и возвращает \texttt{true}.
+\begin{minted}{csharp}
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var entity = await _context.Products.FindAsync(id);
+        if (entity == null) return false;
+        _context.Products.Remove(entity);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+\end{minted}
+
+Данный метод класса \texttt{OrderService} считывает из \acs{DTO} список позиций заказа, 
+загружает из базы данных цены всех продуктов, создает сущность \texttt{Order} через \texttt{AutoMapper}, 
+рассчитывает \texttt{TotalPrice}, сохраняет заказ в базу данных и возвращает готовый \texttt{OrderDto}.
+\begin{minted}{csharp}
+    public async Task<OrderDto> CreateAsync(CreateOrderDto dto)
+    {
+        var productIds = dto.Items.Select(i => i.ProductId).ToList();
+        var products = await _context.Products.Where(p => productIds.Contains(p.Id)).ToListAsync();
+
+        var order = _mapper.Map<Order>(dto);
+        order.TotalPrice = dto.Items.Sum(i => products.First(p => p.Id == i.ProductId).Price * i.Quantity);
+
+        _context.Orders.Add(order);
+        await _context.SaveChangesAsync();
+        return _mapper.Map<OrderDto>(order);
+    }
+\end{minted}
+
+Метод \texttt{GetAllAsync()} загружает из базы данных все заказы вместе с их позициями, 
+маппит каждую сущность в \acs{DTO} и возвращает коллекцию \texttt{OrderDto}.
+\begin{minted}{csharp}
+    public async Task<IEnumerable<OrderDto>> GetAllAsync()
+    {
+        var list = await _context.Orders.Include(o => o.Items).ToListAsync();
+        return _mapper.Map<IEnumerable<OrderDto>>(list);
+    }
+\end{minted}
+
+Данный метод ищет заказ по заданному \texttt{id} вместе со списком \texttt{Items}, 
+если не находит, то возвращает \texttt{null}, иначе маппит в \texttt{OrderDto} и посылает контроллеру.
+\begin{minted}{csharp}
+    public async Task<OrderDto?> GetByIdAsync(int id)
+    {
+        var order = await _context.Orders.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == id);
+        return order == null ? null : _mapper.Map<OrderDto>(order);
+    }
+\end{minted}
+
+Метод \texttt{UpdateAsync(int id, UpdateOrderDto dto)} находит существующий заказ по \texttt{id}, 
+если заказ не найден, то возвращает \texttt{null}, иначе применяет изменения полей из \acs{DTO} через \texttt{AutoMapper}, 
+сохраняет изменения и возвращает обновленный \texttt{OrderDto}.
+\begin{minted}{csharp}
+    public async Task<OrderDto?> UpdateAsync(int id, UpdateOrderDto dto)
+    {
+        var order = await _context.Orders.FindAsync(id);
+        if (order == null) return null;
+        _mapper.Map(dto, order);
+        await _context.SaveChangesAsync();
+        return _mapper.Map<OrderDto>(order);
+    }
+\end{minted}
+
+Данный метод ищет заказ по \texttt{id}, если не найден, то возвращает \texttt{false}, 
+иначе удаляет сущность из контекста, сохраняет изменения и возвращает \texttt{true}.
+\begin{minted}{csharp}
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var order = await _context.Orders.FindAsync(id);
+        if (order == null) return false;
+        _context.Orders.Remove(order);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+\end{minted}
+
 \section{Контроллеры}
 
 Контроллер -- точка входа \acs{HTTP}-запросов в \acs{API}. Он отвечает за прием \acs{HTTP}-запросов и формирование \acs{HTTP}-ответов, 
@@ -798,17 +983,29 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
     public class ProductController : ControllerBase
 \end{minted}
 
-Внедряются зависимости, где \texttt{ShopContext} класс дает доступ к базе данных через \acs{EF} Core, а \texttt{IMapper} (из \texttt{AutoMapper}) 
-нужен для преобразования между \acs{DTO} и сущностями.
+Через параметр конструктора \texttt{IProductService service} в контроллер \texttt{ProductController} 
+передаётся реализация сервиса, зарегистрированная в \acs{DI}-контейнере, а поле \texttt{\_service} 
+сохраняет эту ссылку для дальнейшего вызова бизнес-логики при обработке запросов. 
+То же самое происходит и для контроллера \texttt{OrderController}.
+
+\textbf{Класс \texttt{ProductController}}
 \begin{minted}{csharp}
-    private readonly ShopContext _shopContext;
-    private readonly IMapper _mapper;
-    
-    public ProductController(ShopContext shopContext, IMapper mapper)
+    private readonly IProductService _service;
+
+    public ProductController(IProductService service)
     {
-        _shopContext = shopContext;
-        _mapper = mapper;
-    }    
+        _service = service;
+    }
+\end{minted}
+
+\textbf{Класс \texttt{OrderController}}
+\begin{minted}{csharp}
+    private readonly IOrderService _service;
+
+    public OrderController(IOrderService service)
+    {
+        _service = service;
+    }
 \end{minted}
 
 Каждый метод привязан к \acs{HTTP}-глаголу и маршруту:
@@ -818,10 +1015,10 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
 
 \begin{minted}{csharp}
     [HttpPost]
-    public async Task<ActionResult<ProductDto>> AddProduct([FromBody] CreateProductDto createDto)
+    public async Task<ActionResult<ProductDto>> AddProduct(CreateProductDto createDto)
 
     [HttpPost]
-    public async Task<ActionResult<OrderDto>> CreateOrder([FromBody] CreateOrderDto createDto)
+    public async Task<ActionResult<OrderDto>> CreateOrder(CreateOrderDto createDto)
 \end{minted}
 
 \begin{itemize}
@@ -854,10 +1051,10 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
 
 \begin{minted}{csharp}
     [HttpPut("{id}")]
-    public async Task<ActionResult<ProductDto>> UpdateProduct(int id, [FromBody] UpdateProductDto updateDto)
+    public async Task<ActionResult<ProductDto>> UpdateProduct(int id, UpdateProductDto updateDto)
     
     [HttpPut("{id}")]
-    public async Task<ActionResult<OrderDto>> UpdateOrder(int id, [FromBody] UpdateOrderDto updateDto)
+    public async Task<ActionResult<OrderDto>> UpdateOrder(int id, UpdateOrderDto updateDto)
 \end{minted}
 
 \begin{itemize}
@@ -876,132 +1073,7 @@ Presentation, Business Logic, Data Access и Entity, что обеспечива
 
 \acs{CRUD} -- базовые операции для работы с данными в веб-\acs{API} приложении.
 
-\textbf{Создание:}
-
-Класс \texttt{ProductController}:
-\begin{minted}{csharp}
-    var product = _mapper.Map<Product>(createDto);
-    _shopContext.Products.Add(product);
-    await _shopContext.SaveChangesAsync();
-
-    var productDto = _mapper.Map<ProductDto>(product);
-    return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, productDto);
-\end{minted}
-
-Класс \texttt{OrderController}:
-\begin{minted}{csharp}
-    var productIds = createDto.Items.Select(i => i.ProductId).ToList();
-    var products = await _context.Products
-        .Where(p => productIds.Contains(p.Id))
-        .ToListAsync();
-
-        
-    var order = _mapper.Map<Order>(createDto);
-
-    order.TotalPrice = createDto.Items.Sum(i =>
-    {
-        var prod = products.First(p => p.Id == i.ProductId);
-        return prod.Price * i.Quantity;
-    });
-
-    _context.Orders.Add(order);
-    await _context.SaveChangesAsync();
-
-    var orderDto = _mapper.Map<OrderDto>(order);
-    return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, orderDto);
-\end{minted}
-
-\textbf{Чтение списка:}
-
-Класс \texttt{ProductController}:
-\begin{minted}{csharp}
-    var products = await _shopContext.Products.ToListAsync();
-    return Ok(_mapper.Map<IEnumerable<ProductDto>>(products));
-\end{minted}
-
-Класс \texttt{OrderController}:
-\begin{minted}{csharp}
-    var orders = await _context.Orders
-        .Include(o => o.Items)
-        .ToListAsync();
-
-    return Ok(_mapper.Map<IEnumerable<OrderDto>>(orders));
-\end{minted}
-
-\textbf{Чтение по id:}
-
-Класс \texttt{ProductController}:
-\begin{minted}{csharp}
-    var product = await _shopContext.Products.FindAsync(id);
-        if (product == null)
-            return NotFound();
-
-    return _mapper.Map<ProductDto>(product);
-\end{minted}
-
-Класс \texttt{OrderController}:
-\begin{minted}{csharp}
-    var order = await _context.Orders
-        .Include(o => o.Items)
-        .FirstOrDefaultAsync(o => o.Id == id);
-
-    if (order == null)
-        return NotFound();
-
-    eturn _mapper.Map<OrderDto>(order);
-\end{minted}
-
-\textbf{Обновление:}
-
-Класс \texttt{ProductController}:
-\begin{minted}{csharp}
-    var product = await _shopContext.Products.FindAsync(id);
-    if (product == null)
-        return NotFound();
-
-    _mapper.Map(updateDto, product);
-    await _shopContext.SaveChangesAsync();
-
-    return Ok(_mapper.Map<ProductDto>(product));
-\end{minted}
-
-Класс \texttt{OrderController}:
-\begin{minted}{csharp}
-    var order = await _context.Orders.FindAsync(id);
-    if (order == null)
-        return NotFound();
-
-    _mapper.Map(updateDto, order);
-    await _context.SaveChangesAsync();
-
-    return Ok(_mapper.Map<OrderDto>(order));
-\end{minted}
-
-\textbf{Удаление:}
-
-Класс \texttt{ProductController}:
-\begin{minted}{csharp}
-    var product = await _shopContext.Products.FindAsync(id);
-    if (product == null)
-        return NotFound("Product not found.");
-
-    _shopContext.Products.Remove(product);
-    await _shopContext.SaveChangesAsync();
-
-    return NoContent();
-\end{minted}
-
-Класс \texttt{OrderController}:
-\begin{minted}{csharp}
-    var order = await _context.Orders.FindAsync(id);
-    if (order == null)
-        return NotFound();
-
-    _context.Orders.Remove(order);
-    await _context.SaveChangesAsync();
-
-    return NoContent();
-\end{minted}
+В приложении приведены фрагменты кода реализации \acs{CRUD}-операций \ref{crud}.
 
 \section{Создание базы данных}
 
@@ -1118,7 +1190,7 @@ Unit-тесты проверяют только логику внутри мет
         Assert -- проверка результата, то есть возвращаемого значения, статуса ответа или исключения.
 \end{itemize}
 
-\subsection{Заглушки в unit-тестах}
+\subsection{Заглушки в unit-тестах и Moq}
 Заглушка -- тестовый объект, который возвращает заранее определенные данные, 
 но сам по себе не содержит логики. При unit-тестировании заглушки подставляют вместо реальных зависимостей, 
 чтобы закрепить поведение метода в контроллере и фокусироваться только на логике.
@@ -1132,8 +1204,6 @@ Unit-тесты проверяют только логику внутри мет
     \item
         Тесты с заглушками выполняются мгновенно, без реальных запросов.
 \end{enumerate}
-
-\subsection{Moq}
 
 Moq - библиотека для создания мок-объектов. Она позволяет подменять реализации зависимостей на управляемые объекты, 
 настраивать их поведение и проверять, как тестируемый код с ними взаимодействует. Следует использовать moq для внешних зависимостей, 
@@ -1178,16 +1248,77 @@ Moq - библиотека для создания мок-объектов. Он
 
 
 % Bibliography
-\bibliographystyle{plain}
+\bibliographystyle{ieeetr}
 \bibliography{bibliography}
 \addcontentsline{toc}{chapter}{\bibname}
 
 % Appendices
 % \appendix
 
-% \unnumberedChapter{Anexe}
+\unnumberedChapter{Приложение}
 
-% \section{Funcția actualizării valorii CRC}\label{appendix:crc} %407
+\section{\acs{CRUD}-операции}\label{crud}
+
+\textbf{Создание:}
+
+Класс \texttt{ProductController}:
+\begin{minted}{csharp}
+    var created = await _service.CreateAsync(dto);
+    return CreatedAtAction(nameof(GetProduct), new { id = created.Id }, created);
+\end{minted}
+
+Класс \texttt{OrderController}:
+\begin{minted}{csharp}
+    var created = await _service.CreateAsync(dto);
+    return CreatedAtAction(nameof(GetOrder), new { id = created.Id }, created);
+\end{minted}
+
+\textbf{Чтение списка:}
+
+Класс \texttt{ProductController} и \texttt{OrderController}:
+\begin{minted}{csharp}
+    var list = await _service.GetAllAsync();
+    return Ok(list);
+\end{minted}
+
+\textbf{Чтение по id:}
+
+Класс \texttt{ProductController}:
+\begin{minted}{csharp}
+    var product = await _service.GetByIdAsync(id);
+    if (product == null) return NotFound();
+    return Ok(product);
+\end{minted}
+
+Класс \texttt{OrderController}:
+\begin{minted}{csharp}
+    var order = await _service.GetByIdAsync(id);
+    if (order == null) return NotFound();
+    return Ok(order);
+\end{minted}
+
+\textbf{Обновление:}
+
+Класс \texttt{ProductController} и \texttt{OrderController}:
+\begin{minted}{csharp}
+    var updated = await _service.UpdateAsync(id, dto);
+    if (updated == null) return NotFound();
+    return Ok(updated);
+\end{minted}
+
+\textbf{Удаление:}
+
+Класс \texttt{ProductController}:
+\begin{minted}{csharp}
+    if (!await _service.DeleteAsync(id)) return NotFound("Product not found.");
+    return NoContent();
+\end{minted}
+
+Класс \texttt{OrderController}:
+\begin{minted}{csharp}
+    if (!await _service.DeleteAsync(id)) return NotFound("Order not found.");
+    return NoContent();
+\end{minted}
 
 
 % \section{Iteratorul segmentelor unei secvențe}\label{appendix:sequence_iterator} %1044
